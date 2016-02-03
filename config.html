@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      label {
+        display: inline-block;
+        width: 4em;
+      }
+    </style>
+
+    <script src="https://code.jquery.com/jquery-2.2.0.min.js"></script>
+    <script>
+      $(function() {
+        var ENTRY_POINT = 'http://aitc2.dyndns.org/openmasami/record';
+        var $inputs = $(':input').not('button');
+
+        $('button[name=reload]').on('click', function() {
+          $inputs.each(function() {
+            var input = this
+            var url = ENTRY_POINT + '/latest/bedroom/person1/' + input.name;
+            $.get(url, function(json) {
+              console.log('getValue', input.name, json);
+              value = JSON.parse(json)[0]
+              $(input).val(value);
+            });
+          });
+          return false;
+        }).click();
+
+        $('form').on('submit', function() {
+          $inputs.each(function() {
+            var input = this
+            var value = $(input).val()
+            var url = ENTRY_POINT + '/update/bedroom/person1/' + input.name;
+            $.get(url + '?value=' + value, function(json) {
+              console.log('setValue', input.name, value);
+            });
+          });
+          return false;
+        });
+      });
+    </script>
+  </head>
+  <body>
+    <form>
+      <div>
+        <label for=wakeupTime>起床時刻</label>
+        <input type=time name=wakeupTime />
+      </div>
+      <div>
+        <label for=sleepLevel>睡眠度</label>
+        <select name=sleepLevel>
+          <option value=0>０：覚醒</option>
+          <option value=1>１：浅い</option>
+          <option value=2>２：浅い</option>
+          <option value=3>３：深い</option>
+          <option value=4>４：深い</option>
+          <option value=5>５：深い</option>
+          <option value=6>６：深い</option>
+          <option value=7>７：深い</option>
+          <option value=8>８：深い</option>
+          <option value=9>９：深い</option>
+        </select>
+      </div>
+      <div>
+        <label for=exist>在室状況</label>
+        <select name=exist>
+          <option value=1>いる</option>
+          <option value=0>いない</option>
+        </select>
+      </div>
+      <button name=reload>取得</button>
+      <button type=submit>更新</button>
+    </form>
+  </body>
+</html>

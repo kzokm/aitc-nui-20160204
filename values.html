@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <base href="http://aitc.dyndns.org/openmasami/record/">
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+  </head>
+  <body>
+    <form action="update/living/people">
+      <label>居間の人数：</label>
+      <input name="value" value="">
+      <button type="submit">更新</button>
+    </form>
+    <script>
+      $(function() {
+        $.ajax({
+          method: 'GET',
+          url: 'latest/living/people',
+          contentType: 'application/json',
+          success: function(data) {
+            console.log(data);
+          }
+        });
+      })
+    </script>
+  </body>
+</html>

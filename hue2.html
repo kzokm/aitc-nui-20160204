@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <link rel="stylesheet" href="http://code.jquery.com/ui/1.11.4/themes/cupertino/jquery-ui.css" />
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <!-- script src="https://code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script -->
+    <link rel="stylesheet" media="screen" type="text/css" href="colorpicker/css/colorpicker.css" />
+    <script type="text/javascript" src="colorpicker/js/colorpicker.js"></script>  </Head>
+  <body>
+    <h1>Hue Color Lights</h1>
+    <form>
+      <fieldset>
+        <label>Bridge Addr:</label>
+        <input name="addr" value="" readonly>
+      </fieldset>
+
+      <fieldset id="light1" class="light-state">
+        <legend>Light1:</legend>
+        <input name="id" type="hidden" id="1">
+        <div>
+          <label>On/Off:</label>
+          <input name="on" type="checkbox">
+          <label>Brightness:</label>
+          <input name="bri" value="" type="number" min="1" max="254">
+          <label>Hue:</label>
+          <input name="hue" value="" type="number" min="0" max="65535">
+          <label>Saturation:</label>
+          <input name="sat" value="" type="number" min="0" max="254">
+          <input name="color" readonly class="preview">
+        </div>
+      </fieldset>
+
+      <fieldset id="light2" class="light-state">
+        <legend>Light2:</legend>
+        <label>Light2:</label>
+        <input name="id" type="hidden" id="2">
+        <div>
+          <label>On/Off:</label>
+          <input name="on" type="checkbox">
+          <label>Brightness:</label>
+          <input name="bri" value="" type="number" min="1" max="254">
+          <label>Hue:</label>
+          <input name="hue" value="" type="number" min="0" max="65535">
+          <label>Saturation:</label>
+          <input name="sat" value="" type="number" min="0" max="254">
+          <input name="color" readonly class="preview">
+        </div>
+      </fieldset>
+
+      <fieldset id="light3" class="light-state">
+        <legend>Light3:</legend>
+        <input name="id" type="hidden" id="3">
+        <div>
+          <label>On/Off:</label>
+          <input name="on" type="checkbox">
+          <label>Brightness:</label>
+          <input name="bri" value="" type="number" min="1" max="254">
+          <label>Hue:</label>
+          <input name="hue" value="" type="number" min="0" max="65535">
+          <label>Saturation:</label>
+          <input name="sat" value="" type="number" min="0" max="254">
+          <input name="color" readonly class="preview">
+        </div>
+      </fieldset>
+
+      <button name="update">Update</button>
+    </form>
+
+    <script>
+      $(function() {
+        function api(method) {
+          return 'http://' + window.hueBridgeAddr + '/api/aitc-nui-20150916/' + method;
+        }
+
+        $.get('https://www.meethue.com/api/nupnp', function(bridges) {
+          console.log('Bridge:', bridges[0]);
+          window.hueBridgeAddr = bridges[0].internalipaddress;
+
+          $('input[name=addr]').val(hueBridgeAddr);
+          $.get(api('lights'), function(lights) {
+            for (var i = 0 in lights) {
+              console.log('Light'+i+':', lights[i]);
+              updateLightInputs(i, lights[i].state);
+            }
+          });
+        });
+
+        $('button[name=update]').on('click', function(e) {
+          e.preventDefault();
+          for (var i = 1; i <= 3; i++) {
+            updateLightState(i);
+          }
+          return false;
+        });
+
+        function updateLightInputs(id, state) {
+          var $light = $('#light'+id)
+            .find('input[name=on]').prop('checked', state.on).end()
+            .find('input[name=bri]').val(state.bri).end()
+            .find('input[name=hue]').val(state.hue).end()
+            .find('input[name=sat]').val(state.sat).end();
+          updatePreview($('.preview', $light), state);
+        }
+
+        function getLightInputs(id) {
+          var $light = $.isNumeric(id) ? $('#light'+id) : id;
+          return {
+            on: $('input[name=on]', $light).prop('checked'),
+            bri: parseInt($('input[name=bri]', $light).val()),
+            hue: parseInt($('input[name=hue]', $light).val()),
+            sat: parseInt($('input[name=sat]', $light).val())
+          };
+        }
+
+        function updateLightState(id, state) {
+          state = state || getLightInputs(id);
+          console.log(state);
+          $.ajax({
+            method: 'PUT',
+            url: api('lights/'+id+'/state'),
+            data: JSON.stringify(state),
+            success: function() { console.log(arguments) }
+          });
+        }
+
+        $('.preview').ColorPicker({
+          onSubmit: function(hsb, hex, rgb, el) {
+            console.log(hsb, hex, rgb);
+            el.value = hex;
+            $(el).parents('.light-state')
+              .find('input[name=bri]').val(Math.floor(hsb.b * 2.54)).end()
+              .find('input[name=hue]').val(Math.floor(hsb.h / 360 * 65535)).end()
+              .find('input[name=sat]').val(Math.floor(hsb.s * 2.54)).end()
+              .end()
+              .css('background-color', '#' + hex)
+              .ColorPickerHide();
+          },
+          onBeforeShow: function () {
+            var $light = $(this).parents('.light-state');
+            $(this).ColorPickerSetColor({
+              b: parseInt($('input[name=bri]', $light).val() / 2.54),
+              h: parseInt($('input[name=hue]', $light).val() / 65535 * 360),
+              s: parseInt($('input[name=sat]', $light).val() / 2.54)
+            });
+          }
+        });
+
+        function updatePreview($elem, state) {
+          var r, g, b;
+          var max = state.bri;
+          var min = max - ((state.sat / 254) * max);
+          var h = state.hue * 360 / 65536;
+          if (h < 60) {
+            r = max;
+            g = (h / 60) * (max - min) + min;
+            b = min;
+          }
+          else if (h < 120) {
+            r = ((120 - h) / 60) * (max - min) + min;
+            g = max;
+            b = min;
+          }
+          else if (h < 180) {
+            r = min;
+            g = max;
+            b = ((h - 120) / 60) * (max - min) + min;
+          }
+          else if (h < 240) {
+            r = min;
+            g = ((240 - h) / 60) * (max - min) + min;
+            b = max;
+          }
+          else if (h < 300) {
+            r = ((h - 240) / 60) * (max - min) + min;
+            g = min;
+            b = max;
+          }
+          else {
+            r = max;
+            g = min;
+            b = ((360 - h) / 60) * (max - min) + min;
+          }
+          r = Math.floor(r);
+          g = Math.floor(g);
+          b = Math.floor(b);
+          console.log('rgb', r, g, b);
+          $elem
+            .val(toHexString(r) + toHexString(g) + toHexString(b))
+            .css('background-color', 'rgb('+r+','+g+','+b+')');
+        }
+      })
+
+      var HEXCHARS = "0123456789abcdef";
+
+      function toHexString(i) {
+        var hex = '';
+        hex += HEXCHARS.charAt(Math.floor(i / 16));
+        hex += HEXCHARS.charAt(i % 16);
+        return hex;
+      }
+    </script>
+  </body>
+</html>

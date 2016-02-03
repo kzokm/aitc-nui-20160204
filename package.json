@@ -1,0 +1,28 @@
+{
+  "name": "aitc-nui-20160204",
+  "version": "1.0.0",
+  "description": "Demonstration of 空間OS for SJ2016",
+  "homepage": "https://github.com/kzokm/aitc-nui-20160204#readme",
+  "bugs": {
+    "url": "https://github.com/kzokm/aitc-nui-20160204/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "OKAMURA, Kazuhide",
+    "email": "<okamura@techlier.jp>"
+  },
+  "main": "app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kzokm/aitc-nui-20160204.git"
+  },
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "node-hue-api": "^2.0.0",
+    "request": "^2.61.0",
+    "player": "^0.6.1"
+  }
+}
